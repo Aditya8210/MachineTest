@@ -14,27 +14,28 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.example.machinetest.domain.dataModel.UserData
 import com.example.machinetest.presentation.viewmodel.MyViewModel
 
 @Composable
-fun LoginScreenUi(
+fun SignupScreenUi(
     viewModel: MyViewModel = hiltViewModel(),
-    onNavigateToSignup: () -> Unit,
-    onLoginSuccess: () -> Unit
+    onNavigateToLogin: () -> Unit
 ) {
+    var name by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     
-    val loginState by viewModel.loginUser.collectAsState()
+    val registerState by viewModel.registerUser.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(loginState) {
-        if (loginState.data != null) {
-            Toast.makeText(context, loginState.data, Toast.LENGTH_SHORT).show()
-            onLoginSuccess()
+    LaunchedEffect(registerState) {
+        if (registerState.data != null) {
+            Toast.makeText(context, registerState.data, Toast.LENGTH_SHORT).show()
+            onNavigateToLogin()
         }
-        if (loginState.error != null) {
-            Toast.makeText(context, loginState.error, Toast.LENGTH_SHORT).show()
+        if (registerState.error != null) {
+            Toast.makeText(context, registerState.error, Toast.LENGTH_SHORT).show()
         }
     }
 
@@ -46,13 +47,23 @@ fun LoginScreenUi(
         verticalArrangement = Arrangement.Center
     ) {
         Text(
-            text = "Login",
+            text = "Create Account",
             fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = MaterialTheme.colorScheme.primary
         )
         
         Spacer(modifier = Modifier.height(32.dp))
+
+        OutlinedTextField(
+            value = name,
+            onValueChange = { name = it },
+            label = { Text("Full Name") },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         OutlinedTextField(
             value = email,
@@ -77,13 +88,13 @@ fun LoginScreenUi(
 
         Spacer(modifier = Modifier.height(24.dp))
 
-        if (loginState.isLoading) {
+        if (registerState.isLoading) {
             CircularProgressIndicator()
         } else {
             Button(
                 onClick = { 
-                    if (email.isNotEmpty() && password.isNotEmpty()) {
-                        viewModel.loginUser(email, password)
+                    if (name.isNotEmpty() && email.isNotEmpty() && password.isNotEmpty()) {
+                        viewModel.registerUser(UserData(name, email, password))
                     } else {
                         Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                     }
@@ -91,14 +102,14 @@ fun LoginScreenUi(
                 modifier = Modifier.fillMaxWidth(),
                 shape = MaterialTheme.shapes.medium
             ) {
-                Text("Login", fontSize = 16.sp)
+                Text("Sign Up", fontSize = 16.sp)
             }
         }
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        TextButton(onClick = onNavigateToSignup) {
-            Text("Don't have an account? Sign up")
+        TextButton(onClick = onNavigateToLogin) {
+            Text("Already have an account? Login")
         }
     }
 }
