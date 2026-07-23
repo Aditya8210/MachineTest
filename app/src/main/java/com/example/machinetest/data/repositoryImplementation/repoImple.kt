@@ -2,10 +2,13 @@ package com.example.machinetest.data.repositoryImplementation
 
 import com.example.machinetest.domain.dataModel.UserData
 import com.example.machinetest.domain.repositoryInterface.repoInterface
+import com.example.machinetest.utils.ADMIN_DOC
+import com.example.machinetest.utils.APP_CONFIG
 import com.example.machinetest.utils.ResultState
 import com.example.machinetest.utils.USERS
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -48,6 +51,48 @@ class repoImple @Inject constructor(
                 close()
             }
 
+        awaitClose()
+    }
+
+    override fun getUserData(): Flow<ResultState<UserData>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val uid = auth.currentUser?.uid
+        if (uid != null) {
+            firestore.collection(USERS).document(uid).get()
+                .addOnSuccessListener { document ->
+                    val userData = document.toObject(UserData::class.java)
+                    if (userData != null) {
+                        trySend(ResultState.Success(userData))
+                    } else {
+                        trySend(ResultState.Error("User data not found"))
+                    }
+                    close()
+                }.addOnFailureListener {
+                    trySend(ResultState.Error(it.message.toString()))
+                    close()
+                }
+        } else {
+            trySend(ResultState.Error("User not logged in"))
+            close()
+        }
+        awaitClose()
+    }
+
+    override fun getAdminSecretKey(): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        firestore.collection(APP_CONFIG).document(ADMIN_DOC).get()
+            .addOnSuccessListener { document ->
+                val key = document.getString("secret_key")
+                if (key != null) {
+                    trySend(ResultState.Success(key))
+                } else {
+                    trySend(ResultState.Error("Admin key not found"))
+                }
+                close()
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.message.toString()))
+                close()
+            }
         awaitClose()
     }
 }
