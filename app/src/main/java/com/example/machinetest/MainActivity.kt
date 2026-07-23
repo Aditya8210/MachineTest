@@ -4,24 +4,37 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
 import com.example.machinetest.presentation.navigation.AppNavigation
-import com.example.machinetest.presentation.screen.LoginScreenUi
-import com.example.machinetest.presentation.screen.SignupScreenUi
 import com.example.machinetest.ui.theme.MachineTestTheme
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    private var keepSplashScreen = true
+
     override fun onCreate(savedInstanceState: Bundle?) {
+        val splashScreen = installSplashScreen()
+        splashScreen.setKeepOnScreenCondition { keepSplashScreen }
+        
+        splashScreen.setOnExitAnimationListener { splashScreenView ->
+            splashScreenView.view.animate()
+                .alpha(0f)
+                .setDuration(500L)
+                .withEndAction { splashScreenView.remove() }
+                .start()
+        }
+
         super.onCreate(savedInstanceState)
+        
+        lifecycleScope.launch {
+            delay(2000)
+            keepSplashScreen = false
+        }
+
         enableEdgeToEdge()
         setContent {
             MachineTestTheme {
@@ -30,5 +43,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-
