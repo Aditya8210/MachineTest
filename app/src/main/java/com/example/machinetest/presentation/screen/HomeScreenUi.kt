@@ -35,6 +35,7 @@ import com.example.machinetest.presentation.viewmodel.MyViewModel
 @Composable
 fun HomeScreenUi(
     viewModel: MyViewModel = hiltViewModel(),
+    onNavigateToContacts: () -> Unit,
     onLogout: () -> Unit
 ) {
     val userDataState by viewModel.userData.collectAsState()
@@ -120,6 +121,10 @@ fun HomeScreenUi(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+            Button(onClick = onNavigateToContacts) {
+                Text(text = "View Contacts")
+            }
+            Spacer(modifier = Modifier.height(8.dp))
             Button(onClick = onLogout) {
                 Text(text = "Logout")
             }

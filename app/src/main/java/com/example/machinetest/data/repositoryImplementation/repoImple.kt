@@ -1,9 +1,11 @@
 package com.example.machinetest.data.repositoryImplementation
 
+import com.example.machinetest.domain.dataModel.ContactModel
 import com.example.machinetest.domain.dataModel.UserData
 import com.example.machinetest.domain.repositoryInterface.repoInterface
 import com.example.machinetest.utils.ADMIN_DOC
 import com.example.machinetest.utils.APP_CONFIG
+import com.example.machinetest.utils.CONTACTS
 import com.example.machinetest.utils.ResultState
 import com.example.machinetest.utils.USERS
 import com.google.firebase.auth.FirebaseAuth
@@ -93,6 +95,72 @@ class repoImple @Inject constructor(
                 trySend(ResultState.Error(it.message.toString()))
                 close()
             }
+        awaitClose()
+    }
+
+    override fun syncContacts(contacts: List<ContactModel>): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            trySend(ResultState.Error("User not logged in"))
+            close()
+            return@callbackFlow
+        }
+
+        val contactsRef = firestore.collection(USERS).document(uid).collection(CONTACTS)
+
+        // Delete old then upload new
+        contactsRef.get().addOnSuccessListener { snapshot ->
+            val batch = firestore.batch()
+            for (doc in snapshot.documents) {
+                batch.delete(doc.reference)
+            }
+            
+            for (contact in contacts) {
+                val newDoc = contactsRef.document()
+                batch.set(newDoc, contact)
+            }
+
+            batch.commit().addOnSuccessListener {
+                trySend(ResultState.Success("Contacts Synced Successfully"))
+                close()
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.message.toString()))
+                close()
+            }
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+            close()
+        }
+        awaitClose()
+    }
+
+    override fun deleteCloudContacts(): Flow<ResultState<String>> = callbackFlow {
+        trySend(ResultState.Loading)
+        val uid = auth.currentUser?.uid
+        if (uid == null) {
+            trySend(ResultState.Error("User not logged in"))
+            close()
+            return@callbackFlow
+        }
+
+        val contactsRef = firestore.collection(USERS).document(uid).collection(CONTACTS)
+        contactsRef.get().addOnSuccessListener { snapshot ->
+            val batch = firestore.batch()
+            for (doc in snapshot.documents) {
+                batch.delete(doc.reference)
+            }
+            batch.commit().addOnSuccessListener {
+                trySend(ResultState.Success("Cloud Contacts Deleted Successfully"))
+                close()
+            }.addOnFailureListener {
+                trySend(ResultState.Error(it.message.toString()))
+                close()
+            }
+        }.addOnFailureListener {
+            trySend(ResultState.Error(it.message.toString()))
+            close()
+        }
         awaitClose()
     }
 }

@@ -12,3 +12,6 @@ object SignUpScreen
 @Serializable
 
 object HomeScreen
+
+@Serializable
+object ContactsScreen

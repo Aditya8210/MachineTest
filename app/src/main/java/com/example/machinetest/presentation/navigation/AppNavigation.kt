@@ -4,6 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.example.machinetest.presentation.screen.ContactsScreenUi
 import com.example.machinetest.presentation.screen.HomeScreenUi
 import com.example.machinetest.presentation.screen.LoginScreenUi
 import com.example.machinetest.presentation.screen.SignupScreenUi
@@ -33,12 +34,18 @@ fun AppNavigation() {
         }
         composable<HomeScreen> {
             HomeScreenUi(
+                onNavigateToContacts = { navController.navigate(ContactsScreen) },
                 onLogout = {
                     auth.signOut()
                     navController.navigate(SignInScreen) {
                         popUpTo(0) { inclusive = true }
                     }
                 }
+            )
+        }
+        composable<ContactsScreen> {
+            ContactsScreenUi(
+                onBack = { navController.popBackStack() }
             )
         }
     }

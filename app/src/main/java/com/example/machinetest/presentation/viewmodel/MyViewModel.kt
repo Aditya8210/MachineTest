@@ -3,6 +3,7 @@ package com.example.machinetest.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import android.content.Context
+import com.example.machinetest.domain.dataModel.ContactModel
 import com.example.machinetest.domain.dataModel.UserData
 import com.example.machinetest.domain.repositoryInterface.repoInterface
 import com.example.machinetest.utils.DashboardDataManager
@@ -38,6 +39,43 @@ class MyViewModel @Inject constructor(
 
     private val _dashboardSt = MutableStateFlow(DashboardState())
     val dashboardData = _dashboardSt.asStateFlow()
+
+    private val _contactsListSt = MutableStateFlow<List<ContactModel>>(emptyList())
+    val contactsList = _contactsListSt.asStateFlow()
+
+    private val _syncSt = MutableStateFlow(SyncState())
+    val syncState = _syncSt.asStateFlow()
+
+    fun fetchLocalContacts() {
+        _contactsListSt.value = dataManager.getContactsList()
+    }
+
+    fun syncContacts() {
+        val contacts = dataManager.getContactsList()
+        repoInterface.syncContacts(contacts).onEach {
+            when (it) {
+                is ResultState.Loading -> _syncSt.value = SyncState(isLoading = true)
+                is ResultState.Success -> {
+                    _syncSt.value = SyncState(data = it.data)
+                    fetchDashboardStats()
+                }
+                is ResultState.Error -> _syncSt.value = SyncState(error = it.exception)
+            }
+        }.launchIn(viewModelScope)
+    }
+
+    fun deleteCloudContacts() {
+        repoInterface.deleteCloudContacts().onEach {
+            when (it) {
+                is ResultState.Loading -> _syncSt.value = SyncState(isLoading = true)
+                is ResultState.Success -> {
+                    _syncSt.value = SyncState(data = it.data)
+                    fetchDashboardStats()
+                }
+                is ResultState.Error -> _syncSt.value = SyncState(error = it.exception)
+            }
+        }.launchIn(viewModelScope)
+    }
 
     fun registerUser(userData: UserData) {
         repoInterface.registerUserWithEmailAndPassword(userData).onEach {
@@ -113,5 +151,11 @@ data class RegisterState(
 data class LoginState(
     val isLoading: Boolean = false,
     val error: String ?= null,
+    val data: String? = null
+)
+
+data class SyncState(
+    val isLoading: Boolean = false,
+    val error: String? = null,
     val data: String? = null
 )
