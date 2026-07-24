@@ -53,6 +53,8 @@ fun SignupScreenUi(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
+            .imePadding()
+            .navigationBarsPadding()
             .verticalScroll(rememberScrollState()),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
